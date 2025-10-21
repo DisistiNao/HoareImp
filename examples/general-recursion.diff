@@ -1,0 +1,55 @@
+diff --git a/src/TNT.hs b/src/TNT.hs
+index 062cf6f..f20381b 100644
+--- a/src/TNT.hs
++++ b/src/TNT.hs
+@@ -8,6 +8,7 @@ module TNT
+   , axiom4
+   , axiom5
+   , substPropCalc
++  , ruleAck
+   , ruleAddS
+   , ruleDropS
+   , ruleExistence
+@@ -33,6 +34,7 @@ data Arith a =
+   | S (Arith a)
+   | Plus (Arith a) (Arith a)
+   | Mult (Arith a) (Arith a)
++  | Ack (Arith a) (Arith a)
+   deriving (Eq, Show)
+ 
+ data FOL a =
+@@ -47,6 +49,7 @@ instance Pretty a => Pretty (Arith a) where
+   prPrec q (Plus a b)  = prParen (q > 5) ("(",")") $ prPrec 6 a ++ "+" ++ prPrec 5 b
+   prPrec q (Mult a b)  = prParen (q > 6) ("(",")") $ prPrec 7 a ++ "*" ++ prPrec 6 b
+   prPrec q (S a)       = prParen (q > 7) ("(",")") $ "S" ++ prPrec 7 a
++  prPrec q (Ack a b)   = prParen (q > 6) ("(",")") $ "A(" ++ prPrec 7 a ++ "," ++ prPrec 6 b ++ ")"
+ 
+ instance Pretty a => Pretty (FOL a) where
+   prPrec q (Eq a b)     = prParen (q > 4) ("(",")") $ prPrec 5 a ++ "=" ++ prPrec 4 b
+@@ -281,3 +284,26 @@ ruleInduction base (Proof ih@(PropVar (ForAll x (Imp y z)))) =
+   then Right $ Proof $ PropVar (ForAll x y)
+   else Left "ruleInduction: Cannot construct proof"
+ ruleInduction _ _ = Left "ruleInduction: Cannot construct proof"
++
++evalArithAck :: Eq a => Arith a -> Arith a
++evalArithAck (S q) = S (evalArithAck q)
++evalArithAck (Plus a b) = Plus (evalArithAck a) (evalArithAck b)
++evalArithAck (Mult a b) = Mult (evalArithAck a) (evalArithAck b)
++evalArithAck (Ack e1 e2) = ackS e1 e2
++  where
++  ackS :: Arith a -> Arith a -> Arith a
++  ackS Z n = S n
++  ackS (S m) Z = ackS m (S Z)
++  ackS (S m) (S n) = ackS m (ackS (S m) n)
++evalArithAck x = x
++
++ruleAck :: Eq a => Proof (PropCalc (FOL a)) -> ESP (FOL a)
++ruleAck (Proof (PropVar (Eq a b))) = Right $ (Proof (PropVar $ Eq (evalArithAck a) b))
++ruleAck _ = Left "ruleAck: Cannot construct proof"
++
++data EgVar = P | Q deriving (Eq, Show)
++
++instance Pretty EgVar where
++  prPrec _ = show
++
++eg = putStrLn $ pr $ axiom3 (Var P) (Var Q) >>= ruleSpec (Ack (S (S (S Z))) (S (S Z))) >>= ruleSpec Z >>= ruleAck >>= ruleSymmetry
