@@ -24,8 +24,8 @@ fromProof :: Proof a -> a
 fromProof (Proof a) = a
 
 instance (Show a, Pretty b) => Pretty (Either a b) where
-  prPrec x (Right a) = prPrec x a ++ " ✓"
-  prPrec x (Left a)  = (read (show a) :: String) ++ " ⍻"
+  prPrec x (Right a) = prPrec x a
+  prPrec x (Left a)  = (read (show a) :: String)
 
 instance Pretty a => Pretty (Proof a) where
   prPrec x (Proof a) = "⊢ " ++ prPrec x a
