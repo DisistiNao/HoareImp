@@ -14,4 +14,4 @@ In the `src` folder you will find:
 
 - `ghci -isrc -iexamples` and `> :l Main.hs`
 
-- Once in the REPL mode, evaluate `putStrLn $ pr proof`
+- Once in the REPL mode, evaluate `putStrLn $ pr $ {proof}`
